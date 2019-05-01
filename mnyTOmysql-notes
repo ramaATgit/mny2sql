@@ -1,0 +1,157 @@
+Start phpmyadmin eg: on dt-u10204 
+http://php.home37
+
+
+MAKE A COPY OF DEPO11 eg 26sep13depo11 	
+	*	(do not use - in the table name)
+	*	USE the date of script execution date. eg Today's date if running the scripts today.
+	*	Create a folder eg: 01jul17 to contain the following scripts and files:
+	1.	sed-mny-today.sh
+	2.	cleancsv.sh
+	3.	sed-mnyTOmysql.sh
+	4.	mnyTOmysql
+	5.	From ms money app. eg all20jun17.csv and RENAME it to all.csv
+
+Tip: Create a template folder to keep files 1- 4 and copy & paste the folder to new location and rename it to eg 01jul17. Then paste the ms money file to work on.
+
+Run the script sed-mny-today.sh from the newly created folder to work on the all.csv file. This will output a clean csv file with today's date eg: all01jul17 in it's name.
+
+	make a copy of all01jul17 and rename it as ddMMYY to use in query 4 of workingquery... file to compare
+
+PHPMYADMIN: ON MNY DATABASE
+
+Import the all01jul17 into db as table eg all01Jul17 (ensure the import is into mny database & not depo11 table)
+
+	
+	Ensure the first letter to the month is Capital eg: all01Jul17
+	Rename the imported table if table is numbered
+
+CHECK BOX: The first line of the file contains the table column names (if this is unchecked, the first line will become part of the data)
+
+Run the script sed-mnyTOmysql.sh. This will output  file workingquery01jul17 for example. Go down to the Working quries section and perfom 1 - 3 queires for updating and query 4 for comparison etc.
+
+Query: 1
+
+In order to add new records to db we need to know which are the new accounts in ms money.
+create a comparison between 26sep13depo11 account list & all2feb12 and save it as view?/table:as diff2feb12
+
+eg: 1
+
+CREATE VIEW diff2feb12 AS
+SELECT * FROM all2feb12
+WHERE all2feb12.account
+NOT IN (
+SELECT 26sep13depo1.account
+FROM 26sep13depo11
+WHERE 26sep13depo11.account=all2feb12.account)
+
+template query : 1
+
+tables			names
+diff2feb12		diffNOW
+
+all2feb12		allNOW
+
+bkdepo11	   bkdepo11
+
+
+sed -e "s/difftable/diff$NOW/" -e "s/allNOW/all$NOW/" -e  "s/bkdepo11/$NOW\depo11/" mnyTOmysql
+
+CREATE VIEW difftable  AS
+SELECT * FROM allNOW
+WHERE allNOW.account
+NOT IN (
+SELECT bkdepo11.account
+FROM bkdepo11
+WHERE bkdepo11.account=allNOW.account)
+
+
+---------------------------------
+Query: 2
+
+Adding new records based on new deposit list difference view eg. diff4feb12
+
+eg
+
+INSERT INTO depo11 (account,bal)
+SELECT account, bal
+FROM diff4feb12
+
+template query: 2
+
+INSERT INTO depo11 (account,bal)
+SELECT account, bal
+FROM difftable
+
+---------------------------------
+
+Query: 3
+
+Updating the new amounts in depo11 based on latest mny table all2feb12.
+
+eg:
+
+UPDATE depo11, all13dec12 SET depo11.bal = all13dec12.bal WHERE depo11.Account = all13dec12.Account
+
+template query: 3
+
+UPDATE depo11, allNOW SET depo11.bal = allNOW.bal WHERE depo11.Account = allNOW.Account
+
+
+---------------------------------
+
+Query: 4
+
+all13jun14 --> allNOW
+
+Compare MS Money allDDMMYR account,bal with depo11 (note the dif in the above query. It uses depo11 as outer query
+
+eg: 
+
+SELECT * FROM depo11
+WHERE depo11.account 
+NOT IN (
+SELECT all13jun14.account
+FROM all13jun14)
+
+template query: 
+
+SELECT * FROM depo11
+WHERE depo11.account 
+NOT IN (
+SELECT allNOW.account
+FROM allNOW)
+
+========================================================================
+
+				WORKING Quries
+
+Query: 1
+
+CREATE VIEW difftable  AS
+SELECT * FROM allNOW
+WHERE allNOW.account
+NOT IN (
+SELECT bkdepo11.account
+FROM bkdepo11
+WHERE bkdepo11.account=allNOW.account)
+
+
+
+Query: 2
+
+INSERT INTO depo11 (account,bal)
+SELECT account, bal
+FROM difftable
+
+Query: 3
+
+UPDATE depo11, allNOW SET depo11.bal = allNOW.bal WHERE depo11.Account = allNOW.Account
+
+Query: 4
+
+SELECT * FROM depo11
+WHERE depo11.account 
+NOT IN (
+SELECT allNOW.account
+FROM allNOW)
