@@ -13,6 +13,18 @@ MAKE A COPY OF DEPO11 eg 26sep13depo11
 	5.	From ms money app. eg all20jun17.csv and RENAME it to all.csv
 
 Tip: Create a template folder to keep files 1- 4 and copy & paste the folder to new location and rename it to eg 01jul17. Then paste the ms money file to work on.
+Tip: mysql duplicate records
+SELECT account
+FROM depo11
+WHERE account IN (
+	SELECT account
+	FROM depo11
+	status = open
+	GROUP BY account
+	HAVING count(account) > 1
+	)
+ORDER BY account
+-----------------
 
 Run the script sed-mny-today.sh from the newly created folder to work on the all.csv file. This will output a clean csv file with today's date eg: all01jul17 in it's name.
 
